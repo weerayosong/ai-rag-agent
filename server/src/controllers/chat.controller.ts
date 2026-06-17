@@ -21,8 +21,15 @@ export const chatWithAI = async (req: Request, res: Response): Promise<void> => 
 
     // 3. Return strictly typed JSON
     res.json(aiResponse);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in chat controller:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    
+    if (error.message && error.message.startsWith('RATE_LIMIT:')) {
+      const seconds = error.message.split(':')[1];
+      res.status(429).json({ error: `โควต้า API ของ Gemini เต็มชั่วคราว กรุณารอประมาณ ${seconds} วินาทีแล้วลองพิมพ์ถามใหม่อีกครั้งนะคะ` });
+      return;
+    }
+    
+    res.status(500).json({ error: 'เซิร์ฟเวอร์ขัดข้องชั่วคราว ไม่สามารถดึงข้อมูลได้ค่ะ' });
   }
 };

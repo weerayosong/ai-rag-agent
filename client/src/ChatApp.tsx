@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
 
 interface Product {
   id: number;
@@ -15,13 +16,86 @@ interface Message {
   recommendedProducts?: Product[];
 }
 
-export default function ChatApp() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: 'ai',
-      text: 'ระบบพร้อมทำงานค่ะ\nวันนี้มีสินค้าหมวดไหนที่อยากให้หนูช่วยค้นหาจากฐานข้อมูลไหมคะ?'
+const INITIAL_MESSAGES: Message[] = [
+  {
+    role: 'ai',
+    text: 'ระบบพร้อมทำงานค่ะ\nวันนี้มีสินค้าหมวดไหนที่อยากให้หนูช่วยค้นหาจากฐานข้อมูลไหมคะ?'
+  }
+];
+
+const engToThaiMap: Record<string, string> = {
+  '1': 'ๅ', '2': '/', '3': '-', '4': 'ภ', '5': 'ถ', '6': 'ุ', '7': 'ึ', '8': 'ค', '9': 'ต', '0': 'จ', '-': 'ข', '=': 'ช',
+  'q': 'ๆ', 'w': 'ไ', 'e': 'ำ', 'r': 'พ', 't': 'ะ', 'y': 'ั', 'u': 'ี', 'i': 'ร', 'o': 'น', 'p': 'ย', '[': 'บ', ']': 'ล', '\\': 'ฃ',
+  'a': 'ฟ', 's': 'ห', 'd': 'ก', 'f': 'ด', 'g': 'เ', 'h': '้', 'j': '่', 'k': 'า', 'l': 'ส', ';': 'ว', '\'': 'ง',
+  'z': 'ผ', 'x': 'ป', 'c': 'แ', 'v': 'อ', 'b': 'ิ', 'n': 'ื', 'm': 'ท', ',': 'ม', '.': 'ใ', '/': 'ฝ',
+  '!': '+', '@': '๑', '#': '๒', '$': '๓', '%': '๔', '^': 'ู', '&': '฿', '*': '๕', '(': '๖', ')': '๗', '_': '๘', '+': '๙',
+  'Q': '๐', 'W': '"', 'E': 'ฎ', 'R': 'ฑ', 'T': 'ธ', 'Y': 'ํ', 'U': '๊', 'I': 'ณ', 'O': 'ฯ', 'P': 'ญ', '{': 'ฐ', '}': ',', '|': 'ฅ',
+  'A': 'ฤ', 'S': 'ฆ', 'D': 'ฏ', 'F': 'โ', 'G': 'ฌ', 'H': '็', 'J': '๋', 'K': 'ษ', 'L': 'ศ', ':': 'ซ', '"': '.',
+  'Z': '(', 'X': ')', 'C': 'ฉ', 'V': 'ฮ', 'B': 'ฺ', 'N': '์', 'M': '?', '<': 'ฒ', '>': 'ฬ', '?': 'ฦ'
+};
+
+const thaiToEngMap: Record<string, string> = Object.entries(engToThaiMap).reduce((acc, [eng, thai]) => {
+  acc[thai] = eng;
+  return acc;
+}, {} as Record<string, string>);
+
+const isInvalidThaiPattern = (text: string) => 
+  /^[ัิีึืุู่้๊๋์็ะาำ]/.test(text) || 
+  /[เแโใไ][ะาำเแโใไัิีึืุู่้๊๋์็]/.test(text) || 
+  /[เแโใไ]$/.test(text) || 
+  /[ัิีึืุู][ัิีึืุู]/.test(text) ||
+  /[่้๊๋][่้๊๋]/.test(text) ||
+  /[ัิีึืุู][ำ]/.test(text) ||
+  /[ะา][ะาำ]/.test(text) ||
+  /(ยย|ฟฟ|สส|หห|ดด|พพ|ะะ|าา|ิิ|ีี|ึึ|ืื|ุุ|ูู|เเ|แแ|โโ|ใใ|ไไ)/.test(text);
+
+const convertWordEngToThai = (word: string) => {
+  if (word.length === 0) return word;
+  if (/[\u0E00-\u0E7F]/.test(word)) return word; 
+
+  const isLikelyMistake = 
+    /[a-zA-Z][0-9\-=\[\];',.\/][a-zA-Z]/.test(word) || 
+    /[bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ]{4,}/.test(word) ||
+    word.length > 7;
+
+  if (!isLikelyMistake) return word;
+
+  const mapped = word.split('').map(char => engToThaiMap[char] || char).join('');
+  return isInvalidThaiPattern(mapped) ? word : mapped;
+};
+
+const convertWordThaiToEng = (word: string) => {
+  if (word.length === 0) return word;
+  if (!/[\u0E00-\u0E7F]/.test(word)) return word; 
+
+  if (!isInvalidThaiPattern(word)) return word;
+
+  const mapped = word.split('').map(char => thaiToEngMap[char] || char).join('');
+  
+  if (!/[aeiouyAEIOUY]/.test(mapped)) return word;
+
+  return mapped;
+};
+
+const convertKeyboardLayout = (text: string) => {
+  const words = text.split(/(\s+)/); 
+  return words.map(word => {
+    if (word.trim() === '') return word;
+    
+    const thaiCharCount = (word.match(/[\u0E00-\u0E7F]/g) || []).length;
+    const engCharCount = (word.match(/[a-zA-Z]/g) || []).length;
+
+    if (engCharCount > 0 && thaiCharCount === 0) {
+      return convertWordEngToThai(word);
+    } else if (thaiCharCount > 0 && engCharCount === 0) {
+      return convertWordThaiToEng(word);
     }
-  ]);
+    return word; 
+  }).join('');
+};
+
+export default function ChatApp() {
+  const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -29,7 +103,10 @@ export default function ChatApp() {
 
   const scrollToBottom = () => {
     if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+      chatContainerRef.current.scrollTo({
+        top: chatContainerRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
     }
   };
 
@@ -55,8 +132,10 @@ export default function ChatApp() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const trimmedInput = input.trim();
-    if (!trimmedInput || isLoading) return;
+    const rawInput = input.trim();
+    if (!rawInput || isLoading) return;
+
+    const trimmedInput = convertKeyboardLayout(rawInput);
 
     setMessages(prev => [...prev, { role: 'user', text: trimmedInput }]);
     setInput('');
@@ -71,11 +150,17 @@ export default function ChatApp() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: trimmedInput })
       });
+      
       const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Server error');
+      }
+      
       setMessages(prev => [...prev, { role: 'ai', text: data.text, recommendedProducts: data.recommendedProducts }]);
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      setMessages(prev => [...prev, { role: 'ai', text: 'เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์' }]);
+      setMessages(prev => [...prev, { role: 'ai', text: `ขออภัยค่ะ เกิดข้อผิดพลาดในการเชื่อมต่อ: ${error.message || 'กรุณาลองใหม่อีกครั้ง'}` }]);
     } finally {
       setIsLoading(false);
     }
@@ -101,9 +186,19 @@ export default function ChatApp() {
               <p className="text-[11px] text-gray-400">Inventory Module • DummyJSON</p>
             </div>
           </div>
-          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-gray-50 border border-gray-200 rounded-full">
-            <div className="w-1.5 h-1.5 bg-gray-500 rounded-full animate-pulse"></div>
-            <span className="text-[10px] font-medium text-gray-500 uppercase tracking-wider">Ready</span>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-gray-50 border border-gray-200 rounded-full">
+              <div className="w-1.5 h-1.5 bg-gray-500 rounded-full animate-pulse"></div>
+              <span className="text-[10px] font-medium text-gray-500 uppercase tracking-wider">Ready</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setMessages(INITIAL_MESSAGES)}
+              className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+              title="Clear Chat"
+            >
+              <i className="fa-solid fa-trash-can text-sm"></i>
+            </button>
           </div>
         </div>
       </header>
@@ -117,7 +212,21 @@ export default function ChatApp() {
                   <i className="fa-solid fa-shield-dog text-xl"></i>
                 </div>
                 <div className="bg-white border border-gray-100 rounded-2xl rounded-bl-sm px-4 py-3 text-sm text-gray-700 shadow-sm leading-relaxed w-full">
-                  <p className="whitespace-pre-wrap">{msg.text}</p>
+                  <ReactMarkdown
+                    components={{
+                      p: ({node, ...props}) => <p className="mb-2 last:mb-0 whitespace-pre-wrap" {...props} />,
+                      strong: ({node, ...props}) => <strong className="font-semibold" {...props} />,
+                      ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-2" {...props} />,
+                      ol: ({node, ...props}) => <ol className="list-decimal pl-5 mb-2" {...props} />,
+                      li: ({node, ...props}) => <li className="mb-1" {...props} />,
+                      a: ({node, ...props}) => <a className="text-blue-600 hover:underline" {...props} />,
+                      h1: ({node, ...props}) => <h1 className="text-lg font-bold mb-2" {...props} />,
+                      h2: ({node, ...props}) => <h2 className="text-base font-bold mb-2" {...props} />,
+                      h3: ({node, ...props}) => <h3 className="text-sm font-bold mb-2" {...props} />
+                    }}
+                  >
+                    {msg.text}
+                  </ReactMarkdown>
                   {msg.recommendedProducts && msg.recommendedProducts.length > 0 && (
                     <div className="mt-3 flex flex-col gap-2">
                       {msg.recommendedProducts.map((product) => (
@@ -177,14 +286,14 @@ export default function ChatApp() {
               value={input}
               onChange={handleInput}
               onKeyDown={handleKeyDown}
-              className="w-full bg-transparent py-3 pl-5 pr-12 text-sm focus:outline-none resize-none placeholder-gray-400"
+              className="w-full bg-transparent py-3 pl-5 pr-12 text-sm focus:outline-none resize-none placeholder-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
               placeholder="ค้นหาสินค้า เช่น 'อยากได้ลิปติกสีแดงแบบ เริ่ด เลยล่ะ'..."
               disabled={isLoading}
             />
             <button
               type="submit"
               disabled={isLoading || !input.trim()}
-              className="absolute right-1.5 bottom-1.5 p-2 bg-gray-900 hover:bg-gray-800 disabled:bg-gray-400 text-white rounded-full transition-transform active:scale-95 flex items-center justify-center"
+              className="absolute right-1.5 bottom-1.5 p-2 bg-gray-900 hover:bg-gray-800 disabled:bg-gray-400 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-full transition-transform active:scale-95 flex items-center justify-center"
             >
               <i className="fa-solid fa-paper-plane text-[13px] -translate-x-[1px] translate-y-[1px]"></i>
             </button>
