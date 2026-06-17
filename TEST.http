@@ -1,0 +1,24 @@
+@baseUrl = http://localhost:3000
+
+### 1. Test DummyJSON Service (Milestone 2)
+# ทดสอบว่าดึงข้อมูลสินค้าพื้นฐานได้ไหม
+GET {{baseUrl}}/api/products
+Accept: application/json
+
+### 2. Test RAG AI Agent (Milestone 3)
+# ทดสอบส่งข้อความหา AI และเช็คโครงสร้าง JSON Response
+POST {{baseUrl}}/api/chat
+Content-Type: application/json
+
+{
+  "message": "มีมาสคาร่าตัวไหนแนะนำบ้าง ขอแบบกันน้ำนะ"
+}
+
+### 3. Test RAG AI Agent (Edge Case - Out of Context)
+# ทดสอบว่า AI ป้องกัน Hallucination ได้ไหม เมื่อถามเรื่องที่ไม่มีใน DummyJSON
+POST {{baseUrl}}/api/chat
+Content-Type: application/json
+
+{
+  "message": "ขอสูตรทำต้มยำกุ้งหน่อย"
+}
