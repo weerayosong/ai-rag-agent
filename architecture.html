@@ -1,0 +1,813 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Noto+Sans+Thai:wght@100..900&display=swap"
+            rel="stylesheet"
+        />
+
+        <title>AI RAG Agent - Architecture Documentation</title>
+
+        <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+        />
+
+        <style>
+            body {
+                font-family: "Inter", "Noto Sans Thai", sans-serif !important;
+            }
+            ::-webkit-scrollbar {
+                width: 6px;
+            }
+            ::-webkit-scrollbar-track {
+                background: transparent;
+            }
+            ::-webkit-scrollbar-thumb {
+                background: #cbd5e1;
+                border-radius: 10px;
+            }
+            ::-webkit-scrollbar-thumb:hover {
+                background: #94a3b8;
+            }
+        </style>
+    </head>
+    <body
+        class="bg-slate-50 text-slate-800 font-sans antialiased p-6 lg:p-12 relative"
+    >
+        <div class="max-w-5xl mx-auto space-y-12">
+            <header
+                class="border-b-2 border-slate-200 pb-6 flex justify-between items-end"
+            >
+                <div>
+                    <h1
+                        class="text-4xl font-extrabold text-slate-900 tracking-tight uppercase flex items-center gap-3"
+                    >
+                        <i
+                            class="fa-solid fa-microchip text-blue-600 text-3xl"
+                        ></i>
+                        <span
+                            >AI RAG
+                            <span
+                                class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600"
+                                >Agent</span
+                            ></span
+                        >
+                    </h1>
+                    <p
+                        class="text-slate-500 mt-2 font-semibold tracking-widest uppercase text-sm"
+                    >
+                        System Design & Software Architecture Documentation
+                    </p>
+                </div>
+                <div
+                    class="text-right text-xs font-bold text-slate-400 uppercase"
+                >
+                    React + Express + DummyJSON + Gemini Flash
+                </div>
+            </header>
+
+            <section
+                class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 border-t-4 border-t-slate-800"
+            >
+                <h2
+                    class="text-xl font-bold text-slate-800 mb-2 flex items-center gap-2 uppercase tracking-wide"
+                >
+                    <i class="fa-solid fa-sitemap text-slate-500"></i> 1.
+                    Architecture & CI/CD Pipeline
+                </h2>
+                <p class="text-sm text-slate-500 mb-6">
+                    โครงสร้างระบบแบบแยกการทำงาน Client/Server โดยแชร์ Types
+                    ร่วมกัน พร้อมท่อ CI/CD สำหรับการ Deploy
+                </p>
+
+                <div
+                    class="flex justify-center p-4 border border-slate-200 bg-slate-50/50 rounded-lg overflow-x-auto cursor-pointer hover:border-blue-300 hover:shadow-md transition-all duration-300 group"
+                    onclick="openModal(this)"
+                >
+                    <pre
+                        class="mermaid group-hover:opacity-90 transition-opacity"
+                    >
+                    graph TD
+                        classDef git fill:#18181b,stroke:#3f3f46,stroke-width:2px,color:#ffffff
+                        classDef client fill:#f8fafc,stroke:#94a3b8,stroke-width:2px,color:#334155
+                        classDef server fill:#0f172a,stroke:#334155,stroke-width:2px,color:#ffffff
+                        classDef external fill:#eff6ff,stroke:#3b82f6,stroke-width:2px,color:#1e3a8a
+                        classDef deploy fill:#f0fdf4,stroke:#22c55e,stroke-width:2px,color:#14532d,stroke-dasharray: 5 5
+
+                        Repo["GitHub Repository<br/>(Monorepo)"]:::git
+
+                        subgraph CI/CD Pipeline
+                            Repo -->|Git Push| Action["GitHub Actions<br/>(Type Check & Build)"]:::git
+                            Action -->|Trigger Deploy| Vercel["Vercel<br/>(Hosts /client)"]:::deploy
+                            Action -->|Trigger Deploy| Render["Render.com<br/>(Hosts /server)"]:::deploy
+                        end
+
+                        subgraph Client ["Frontend (React + Vite + Tailwind v4)"]
+                            UI["Chat UI Components"]:::client
+                            Vercel -.-> UI
+                        end
+
+                        subgraph Server ["Backend (Express + Node + TS)"]
+                            API["Express API"]:::server
+                            RAG["Agent Orchestrator"]:::server
+                            Render -.-> API
+                            API --> RAG
+                        end
+
+                        subgraph External ["External Services"]
+                            DummyJSON[("DummyJSON")]:::external
+                            Gemini["Gemini Flash 3.5"]:::external
+                        end
+
+                        UI <-->|Strict JSON Payload| API
+                        RAG <-->|Fetch Data| DummyJSON
+                        RAG <-->|Prompt Construction| Gemini
+                    </pre>
+                </div>
+            </section>
+
+            <section
+                class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 border-t-4 border-t-pink-500"
+            >
+                <h2
+                    class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2 uppercase tracking-wide"
+                >
+                    <i
+                        class="fa-solid fa-wand-magic-sparkles text-pink-500"
+                    ></i>
+                    2. Core Features & AI Capabilities
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div
+                        class="border border-slate-200 rounded-lg p-5 bg-slate-50"
+                    >
+                        <div class="flex items-center gap-3 mb-3">
+                            <div
+                                class="w-8 h-8 rounded-full bg-pink-100 text-pink-600 flex items-center justify-center"
+                            >
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </div>
+                            <h3 class="font-bold text-slate-800 text-sm">
+                                Semantic Product Search
+                            </h3>
+                        </div>
+                        <p class="text-xs text-slate-600 leading-relaxed">
+                            ก้าวข้ามการค้นหาแบบ Keyword Match
+                            ผู้ใช้สามารถพิมพ์ความต้องการแบบธรรมชาติ (เช่น
+                            "หาครีมทาหน้าสำหรับคนเป็นสิวราคาไม่เกิน 20 ดอลลาร์")
+                            AI
+                            จะวิเคราะห์ความตั้งใจและคัดกรองสินค้าที่ตรงกับบริบทที่สุดมานำเสนอ
+                        </p>
+                    </div>
+                    <div
+                        class="border border-slate-200 rounded-lg p-5 bg-slate-50"
+                    >
+                        <div class="flex items-center gap-3 mb-3">
+                            <div
+                                class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center"
+                            >
+                                <i class="fa-solid fa-brain"></i>
+                            </div>
+                            <h3 class="font-bold text-slate-800 text-sm">
+                                RAG-Powered Q&A
+                            </h3>
+                        </div>
+                        <p class="text-xs text-slate-600 leading-relaxed">
+                            ระบบจะตอบคำถามเกี่ยวกับสินค้าโดยอ้างอิงจากข้อมูลโภชนาการ
+                            เรตติ้ง หรือคำอธิบายที่ดึงมาจาก DummyJSON เท่านั้น
+                            ป้องกันปัญหา AI มั่วข้อมูล (Hallucination)
+                            ทำให้แอปมีความน่าเชื่อถือสูง
+                        </p>
+                    </div>
+                    <div
+                        class="border border-slate-200 rounded-lg p-5 bg-slate-50"
+                    >
+                        <div class="flex items-center gap-3 mb-3">
+                            <div
+                                class="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center"
+                            >
+                                <i class="fa-solid fa-layer-group"></i>
+                            </div>
+                            <h3 class="font-bold text-slate-800 text-sm">
+                                Structured JSON Rendering
+                            </h3>
+                        </div>
+                        <p class="text-xs text-slate-600 leading-relaxed">
+                            Gemini Flash 3.5
+                            จะถูกบังคับให้ตอบกลับมาเป็นโครงสร้างข้อมูล
+                            (Structured Output) เสมอ ทำให้ Frontend
+                            สามารถนำข้อมูลไปวาดเป็นการ์ดสินค้า (Product Card)
+                            ที่สวยงามได้ทันที ไม่ใช่แค่ข้อความทื่อๆ
+                        </p>
+                    </div>
+                    <div
+                        class="border border-slate-200 rounded-lg p-5 bg-slate-50"
+                    >
+                        <div class="flex items-center gap-3 mb-3">
+                            <div
+                                class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center"
+                            >
+                                <i class="fa-solid fa-clock-rotate-left"></i>
+                            </div>
+                            <h3 class="font-bold text-slate-800 text-sm">
+                                Context-Aware Memory
+                            </h3>
+                        </div>
+                        <p class="text-xs text-slate-600 leading-relaxed">
+                            ระบบมีการเก็บ State
+                            ประวัติการแชทส่งไปพร้อมกับคำถามใหม่เสมอ
+                            ทำให้ผู้ใช้สามารถสั่งงานต่อเนื่องได้ เช่น
+                            "เอาตัวเมื่อกี้ แต่ขอราคาถูกกว่านี้" AI
+                            จะเข้าใจบริบทต่อเนื่องได้ทันที
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <section
+                class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 border-t-4 border-t-blue-500"
+            >
+                <h2
+                    class="text-xl font-bold text-slate-800 mb-2 flex items-center gap-2 uppercase tracking-wide"
+                >
+                    <i class="fa-solid fa-arrows-turn-right text-blue-500"></i>
+                    3. RAG Data Flow Sequence
+                </h2>
+                <p class="text-sm text-slate-500 mb-6">
+                    ลำดับการดึงข้อมูลเพื่อสร้างบริบทเสริม (Augmented Context)
+                    ก่อนส่งให้ Gemini ประมวลผล
+                </p>
+
+                <div
+                    class="flex justify-center p-4 border border-slate-200 bg-slate-50/50 rounded-lg overflow-x-auto cursor-pointer hover:border-purple-300 hover:shadow-md transition-all duration-300 group"
+                    onclick="openModal(this)"
+                >
+                    <pre
+                        class="mermaid group-hover:opacity-90 transition-opacity"
+                    >
+                    sequenceDiagram
+                        autonumber
+                        participant User
+                        participant React as Client UI
+                        participant Express as API Server
+                        participant DB as DummyJSON
+                        participant AI as Gemini Flash
+
+                        User->>React: Submit Query (e.g., "อยากได้ลิปติกสีแดงแบบ เริ่ด เลยล่ะ")
+                        React->>Express: POST /api/chat
+                        
+                        rect rgb(239, 246, 255)
+                            Note over Express,DB: 1. Retrieval Phase
+                            Express->>DB: Fetch products category
+                            DB-->>Express: Return raw JSON array
+                        end
+
+                        rect rgb(243, 232, 255)
+                            Note over Express,AI: 2. Augmentation & Generation
+                            Express->>Express: Build Prompt + Product Data
+                            Express->>AI: Send System Instructions + Payload
+                            AI-->>Express: Return AIResponseSchema
+                        end
+
+                        Express-->>React: Structured Data (Text & Array)
+                        React->>User: Render Chat & Product Cards
+                    </pre>
+                </div>
+            </section>
+
+            <section
+                class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 border-t-4 border-t-indigo-500"
+            >
+                <h2
+                    class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2 uppercase tracking-wide"
+                >
+                    <i class="fa-solid fa-shield-halved text-indigo-500"></i> 4.
+                    State Management & Error Pipeline
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div
+                        class="border border-slate-200 rounded-lg p-5 bg-slate-50"
+                    >
+                        <h3
+                            class="font-bold text-slate-800 border-b border-slate-200 pb-2 mb-3 uppercase text-sm"
+                        >
+                            React State (Frontend)
+                        </h3>
+                        <ul class="text-sm text-slate-600 space-y-3">
+                            <li>
+                                <strong class="text-indigo-600"
+                                    >Chat History:</strong
+                                >
+                                ใช้
+                                <code>useState&lt;Message[]&gt;</code>
+                                เพื่อเก็บประวัติการสนทนาทั้งหมดใน Session
+                                ปัจจุบัน
+                            </li>
+                            <li>
+                                <strong class="text-indigo-600"
+                                    >Loading State:</strong
+                                >
+                                แสดง UI ไข่ปลา (Typing Indicator) ระหว่างรอ
+                                <code>fetch()</code> โดยผูกกับ
+                                <code>isProcessing</code>
+                            </li>
+                            <li>
+                                <strong class="text-indigo-600"
+                                    >Auto-Scroll:</strong
+                                >
+                                ใช้
+                                <code>useRef</code> ผูกกับจุดล่างสุดของช่องแชท
+                                เพื่อดันหน้าจอลงอัตโนมัติเมื่อมีข้อความใหม่
+                            </li>
+                        </ul>
+                    </div>
+                    <div
+                        class="border border-red-100 rounded-lg p-5 bg-red-50/30"
+                    >
+                        <h3
+                            class="font-bold text-red-800 border-b border-red-200 pb-2 mb-3 uppercase text-sm"
+                        >
+                            Error Handling Pipeline
+                        </h3>
+                        <ul class="text-sm text-red-700 space-y-3">
+                            <li>
+                                <strong class="font-semibold"
+                                    >AI Rate Limit (429):</strong
+                                >
+                                ดักจับเมื่อ API Gemini เต็มโควต้า
+                                และแจ้งเตือนผู้ใช้ให้รอ 1 นาที
+                            </li>
+                            <li>
+                                <strong class="font-semibold"
+                                    >Fallback Response:</strong
+                                >
+                                หากดึงข้อมูลจาก DummyJSON พลาด ให้ AI
+                                ตอบกลับเป็นข้อความขออภัยโดยที่แอปไม่พัง
+                            </li>
+                            <li>
+                                <strong class="font-semibold"
+                                    >Validation:</strong
+                                >
+                                ป้องกันการส่งข้อความว่างเปล่าจากหน้า UI ก่อนยิง
+                                API เสมอ
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section
+                class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 border-t-4 border-t-purple-500"
+            >
+                <h2
+                    class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2 uppercase tracking-wide"
+                >
+                    <i class="fa-solid fa-code text-purple-500"></i> 5. Core
+                    TypeScript Interfaces
+                </h2>
+                <div class="overflow-x-auto rounded-lg border border-slate-200">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr
+                                class="bg-slate-50 border-b border-slate-200 text-xs uppercase text-slate-500 tracking-wider"
+                            >
+                                <th
+                                    class="p-4 font-bold border-r border-slate-200"
+                                >
+                                    Interface
+                                </th>
+                                <th
+                                    class="p-4 font-bold border-r border-slate-200"
+                                >
+                                    Structure
+                                </th>
+                                <th class="p-4 font-bold">Purpose</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm divide-y divide-slate-100">
+                            <tr class="hover:bg-blue-50/50 transition-colors">
+                                <td
+                                    class="p-4 font-mono font-bold text-slate-700 border-r border-slate-200"
+                                >
+                                    Product
+                                </td>
+                                <td
+                                    class="p-4 font-mono text-xs text-slate-500 border-r border-slate-200"
+                                >
+                                    { id, title, price, category, thumbnail }
+                                </td>
+                                <td class="p-4 text-slate-600">
+                                    โมเดลสินค้า ใช้รับข้อมูลจาก DummyJSON
+                                    และเรนเดอร์ UI
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-purple-50/50 transition-colors">
+                                <td
+                                    class="p-4 font-mono font-bold text-slate-700 border-r border-slate-200"
+                                >
+                                    ChatRequest
+                                </td>
+                                <td
+                                    class="p-4 font-mono text-xs text-slate-500 border-r border-slate-200"
+                                >
+                                    { message: string, history?: Message[] }
+                                </td>
+                                <td class="p-4 text-slate-600">
+                                    ควบคุม Payload ขาเข้าที่ API Endpoint
+                                    ต้องการ
+                                </td>
+                            </tr>
+                            <tr
+                                class="bg-slate-900 text-white transition-colors"
+                            >
+                                <td
+                                    class="p-4 font-mono font-bold border-r border-slate-700 text-purple-300"
+                                >
+                                    AIResponse
+                                </td>
+                                <td
+                                    class="p-4 font-mono text-xs border-r border-slate-700 text-slate-300"
+                                >
+                                    { text: string, recommendedProducts?:
+                                    Product[] }
+                                </td>
+                                <td class="p-4 text-slate-200 text-xs">
+                                    โครงสร้าง JSON บังคับที่โมเดลต้องส่งกลับมา
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section
+                class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 border-t-4 border-t-emerald-500"
+            >
+                <h2
+                    class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2 uppercase tracking-wide"
+                >
+                    <i class="fa-solid fa-layer-group text-emerald-500"></i> 6.
+                    Internal Module Architecture
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div
+                        class="border border-emerald-100 rounded-lg p-5 bg-emerald-50/30"
+                    >
+                        <h3
+                            class="font-bold text-emerald-800 border-b border-emerald-200 pb-2 mb-3 uppercase text-sm"
+                        >
+                            <i class="fa-brands fa-react text-emerald-600"></i>
+                            Frontend Layers (Client)
+                        </h3>
+                        <ul class="text-sm text-emerald-900 space-y-4">
+                            <li>
+                                <strong class="block text-emerald-700 mb-1"
+                                    ><i class="fa-solid fa-puzzle-piece"></i>
+                                    Components</strong
+                                >
+                                <span class="text-xs text-emerald-600/80"
+                                    >UI ล้วนๆ (Dumb Components) เช่น
+                                    <code>ChatBubble</code>,
+                                    <code>ProductCard</code> รับ Props
+                                    มาแสดงผลอย่างเดียว</span
+                                >
+                            </li>
+                            <li>
+                                <strong class="block text-emerald-700 mb-1"
+                                    ><i class="fa-solid fa-link"></i>
+                                    Hooks</strong
+                                >
+                                <span class="text-xs text-emerald-600/80"
+                                    >แยก Logic ออกจาก UI เช่น
+                                    <code>useChat()</code> จัดการ State
+                                    ข้อความและการโหลด</span
+                                >
+                            </li>
+                            <li>
+                                <strong class="block text-emerald-700 mb-1"
+                                    ><i class="fa-solid fa-network-wired"></i>
+                                    Services (API Client)</strong
+                                >
+                                <span class="text-xs text-emerald-600/80"
+                                    >ศูนย์รวมการยิง API คุยกับ Backend เช่น
+                                    <code>chat.service.ts</code></span
+                                >
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div
+                        class="border border-slate-200 rounded-lg p-5 bg-slate-100/50"
+                    >
+                        <h3
+                            class="font-bold text-slate-800 border-b border-slate-300 pb-2 mb-3 uppercase text-sm"
+                        >
+                            <i class="fa-brands fa-node-js text-green-600"></i>
+                            Backend Layers (Server)
+                        </h3>
+                        <ul class="text-sm text-slate-700 space-y-4">
+                            <li>
+                                <strong class="block text-slate-800 mb-1"
+                                    ><i class="fa-solid fa-route"></i>
+                                    Routes</strong
+                                >
+                                <span class="text-xs text-slate-500"
+                                    >กำหนดเส้นทาง API (Endpoints) เช่น
+                                    <code>POST /api/chat</code> แล้วส่งต่อให้
+                                    Controller</span
+                                >
+                            </li>
+                            <li>
+                                <strong class="block text-slate-800 mb-1"
+                                    ><i class="fa-solid fa-gamepad"></i>
+                                    Controllers</strong
+                                >
+                                <span class="text-xs text-slate-500"
+                                    >รับ Request (ดึง Body/Params)
+                                    ตรวจสอบความถูกต้อง แล้วเรียกใช้
+                                    Services</span
+                                >
+                            </li>
+                            <li>
+                                <strong class="block text-slate-800 mb-1"
+                                    ><i class="fa-solid fa-cogs"></i> Services
+                                    (Business Logic)</strong
+                                >
+                                <span class="text-xs text-slate-500">
+                                    <code>gemini.service.ts</code> จัดการ Prompt
+                                    AI,
+                                    <code>dummy.service.ts</code>
+                                    ดึงข้อมูลสินค้า</span
+                                >
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section
+                class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 border-t-4 border-t-sky-500 mb-12"
+            >
+                <h2
+                    class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2 uppercase tracking-wide"
+                >
+                    <i class="fa-solid fa-folder-tree text-sky-500"></i> 7.
+                    Directory & Environment
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="flex flex-col gap-6">
+                        <div
+                            class="border border-slate-200 rounded-lg p-5 bg-slate-50/50 shadow-inner"
+                        >
+                            <h3
+                                class="font-bold text-slate-800 border-b border-slate-200 pb-2 mb-3 uppercase text-sm flex items-center gap-2"
+                            >
+                                <i
+                                    class="fa-solid fa-folder-open text-slate-400"
+                                ></i>
+                                ai-rag-agent/
+                                <span class="text-xs font-sans"
+                                    >(Root Directory)</span
+                                >
+                            </h3>
+                            <ul
+                                class="text-sm text-slate-600 space-y-2 font-mono ml-2 border-l border-slate-300 pl-4"
+                            >
+                                <li class="flex items-center gap-2">
+                                    <i
+                                        class="fa-solid fa-file-code text-slate-400"
+                                    ></i>
+                                    .gitignore
+                                </li>
+                                <li class="flex items-center gap-2">
+                                    <i
+                                        class="fa-brands fa-markdown text-sky-500"
+                                    ></i>
+                                    project-blueprint.md
+                                </li>
+                                <li class="flex items-center gap-2">
+                                    <i
+                                        class="fa-brands fa-html5 text-orange-500"
+                                    ></i>
+                                    architecture.html
+                                </li>
+                            </ul>
+                        </div>
+                        <div
+                            class="border border-purple-200 rounded-lg p-5 bg-purple-50/30"
+                        >
+                            <h3
+                                class="font-bold text-purple-900 border-b border-purple-200 pb-2 mb-3 uppercase text-sm flex items-center gap-2"
+                            >
+                                <i
+                                    class="fa-solid fa-folder text-purple-400"
+                                ></i>
+                                shared/
+                            </h3>
+                            <ul
+                                class="text-sm text-purple-800 space-y-2 font-mono ml-2 border-l border-purple-300 pl-4"
+                            >
+                                <li class="flex items-center gap-2">
+                                    <i
+                                        class="fa-brands fa-js text-purple-400"
+                                    ></i>
+                                    types.ts
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-6">
+                        <div
+                            class="border border-blue-200 rounded-lg p-5 bg-blue-50/30"
+                        >
+                            <h3
+                                class="font-bold text-blue-900 border-b border-blue-200 pb-2 mb-3 uppercase text-sm flex items-center gap-2"
+                            >
+                                <i class="fa-brands fa-react text-blue-500"></i>
+                                client/
+                                <span class="text-xs font-sans"
+                                    >(Vite+React)</span
+                                >
+                            </h3>
+                            <ul
+                                class="text-sm text-blue-800 space-y-2 font-mono ml-2 border-l border-blue-300 pl-4"
+                            >
+                                <li class="flex items-center gap-2">
+                                    <i
+                                        class="fa-solid fa-file-code text-blue-400"
+                                    ></i>
+                                    vercel.json
+                                </li>
+                                <li class="flex items-center gap-2">
+                                    <i
+                                        class="fa-solid fa-file-code text-blue-400"
+                                    ></i>
+                                    .env
+                                </li>
+                                <li
+                                    class="mt-2 text-blue-900 font-semibold flex items-center gap-2"
+                                >
+                                    <i
+                                        class="fa-solid fa-folder-open text-blue-400"
+                                    ></i>
+                                    src/
+                                </li>
+                                <ul
+                                    class="ml-4 border-l border-blue-200 pl-4 mt-1 space-y-1"
+                                >
+                                    <li class="flex items-center gap-2">
+                                        <i
+                                            class="fa-brands fa-css3-alt text-blue-400"
+                                        ></i>
+                                        index.css
+                                    </li>
+                                    <li class="flex items-center gap-2">
+                                        <i
+                                            class="fa-solid fa-folder text-blue-400"
+                                        ></i>
+                                        components/
+                                    </li>
+                                    <li class="flex items-center gap-2">
+                                        <i
+                                            class="fa-solid fa-folder text-blue-400"
+                                        ></i>
+                                        hooks/
+                                    </li>
+                                    <li class="flex items-center gap-2">
+                                        <i
+                                            class="fa-solid fa-folder text-blue-400"
+                                        ></i>
+                                        services/
+                                    </li>
+                                </ul>
+                            </ul>
+                        </div>
+                        <div
+                            class="border border-slate-700 rounded-lg p-5 bg-slate-800 text-slate-200"
+                        >
+                            <h3
+                                class="font-bold text-slate-100 border-b border-slate-600 pb-2 mb-3 uppercase text-sm flex items-center gap-2"
+                            >
+                                <i
+                                    class="fa-brands fa-node-js text-green-500"
+                                ></i>
+                                server/
+                                <span class="text-xs font-sans">(Express)</span>
+                            </h3>
+                            <ul
+                                class="text-sm space-y-2 font-mono ml-2 border-l border-slate-600 pl-4"
+                            >
+                                <li class="flex items-center gap-2">
+                                    <i
+                                        class="fa-solid fa-file-code text-slate-500"
+                                    ></i>
+                                    render.yaml
+                                </li>
+                                <li class="flex items-center gap-2">
+                                    <i
+                                        class="fa-solid fa-file-shield text-red-400"
+                                    ></i>
+                                    .env
+                                </li>
+                                <li
+                                    class="mt-2 text-slate-300 font-semibold flex items-center gap-2"
+                                >
+                                    <i
+                                        class="fa-solid fa-folder-open text-slate-400"
+                                    ></i>
+                                    src/
+                                </li>
+                                <ul
+                                    class="ml-4 border-l border-slate-600 pl-4 mt-1 space-y-1 text-slate-300"
+                                >
+                                    <li class="flex items-center gap-2">
+                                        <i
+                                            class="fa-solid fa-folder text-slate-500"
+                                        ></i>
+                                        routes/
+                                    </li>
+                                    <li class="flex items-center gap-2">
+                                        <i
+                                            class="fa-solid fa-folder text-slate-500"
+                                        ></i>
+                                        controllers/
+                                    </li>
+                                    <li class="flex items-center gap-2">
+                                        <i
+                                            class="fa-solid fa-folder text-slate-500"
+                                        ></i>
+                                        services/
+                                    </li>
+                                </ul>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <div
+            id="diagramModal"
+            class="fixed inset-0 z-50 hidden bg-slate-900/90 backdrop-blur-sm flex items-center justify-center p-4 lg:p-12 transition-opacity duration-300 opacity-0"
+            onclick="closeModal()"
+        >
+            <button
+                class="absolute top-6 right-6 text-slate-400 hover:text-white text-4xl cursor-pointer z-50 transition-colors"
+            >
+                <i class="fa-solid fa-times"></i>
+            </button>
+            <div
+                class="bg-white p-6 lg:p-10 rounded-2xl shadow-2xl w-full max-w-7xl h-full max-h-[90vh] overflow-auto flex items-center justify-center border-t-4 border-blue-500"
+                onclick="event.stopPropagation()"
+            >
+                <div
+                    id="modalContent"
+                    class="w-full flex justify-center scale-100"
+                ></div>
+            </div>
+        </div>
+
+        <script type="module">
+            import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+            mermaid.initialize({ startOnLoad: true, theme: "base" });
+            window.openModal = function (container) {
+                const modal = document.getElementById("diagramModal");
+                const modalContent = document.getElementById("modalContent");
+                const svg = container.querySelector("svg");
+                if (svg) {
+                    const clone = svg.cloneNode(true);
+                    clone.style.width = "100%";
+                    clone.style.height = "auto";
+                    clone.style.maxHeight = "85vh";
+                    clone.style.objectFit = "contain";
+                    modalContent.innerHTML = "";
+                    modalContent.appendChild(clone);
+                    modal.classList.remove("hidden");
+                    setTimeout(() => {
+                        modal.classList.remove("opacity-0");
+                    }, 10);
+                    document.body.style.overflow = "hidden";
+                }
+            };
+            window.closeModal = function () {
+                const modal = document.getElementById("diagramModal");
+                modal.classList.add("opacity-0");
+                setTimeout(() => {
+                    modal.classList.add("hidden");
+                    document.getElementById("modalContent").innerHTML = "";
+                    document.body.style.overflow = "auto";
+                }, 300);
+            };
+            document.addEventListener("keydown", function (event) {
+                if (event.key === "Escape") closeModal();
+            });
+        </script>
+    </body>
+</html>
