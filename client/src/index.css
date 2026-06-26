@@ -7,6 +7,21 @@
     background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-    background: #e5e7eb;
+    background: #d1d5db; /* Light theme scrollbar */
     border-radius: 10px;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
