@@ -161,7 +161,10 @@ export default function ChatApp() {
       setMessages(prev => [...prev, { role: 'ai', text: data.text, recommendedProducts: data.recommendedProducts }]);
     } catch (error: any) {
       console.error(error);
-      setMessages(prev => [...prev, { role: 'ai', text: `ขออภัยค่ะ เกิดข้อผิดพลาดในการเชื่อมต่อ: ${error.message || 'กรุณาลองใหม่อีกครั้ง'}` }]);
+      const errorMessage = error.message === 'Failed to fetch' 
+        ? 'ขออภัยค่ะ ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ รบกวนคุณลูกค้าลองใหม่อีกครั้งนะคะ 🙇‍♀️'
+        : (error.message || 'ขออภัยค่ะ ระบบมีปัญหาขัดข้องเล็กน้อย รบกวนคุณลูกค้าลองใหม่อีกครั้งนะคะ 🙇‍♀️');
+      setMessages(prev => [...prev, { role: 'ai', text: errorMessage }]);
     } finally {
       setIsLoading(false);
     }

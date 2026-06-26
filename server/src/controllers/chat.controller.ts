@@ -41,6 +41,11 @@ export const chatWithAI = async (req: Request, res: Response): Promise<void> => 
       return;
     }
     
-    res.status(500).json({ error: `เซิร์ฟเวอร์ขัดข้อง: ${error.message}` });
+    if (error.message && (error.message.includes('503') || error.message.includes('UNAVAILABLE'))) {
+      res.status(503).json({ error: 'ขออภัยค่ะ ตอนนี้ลูกค้าในร้านเยอะมาก คิวชำระเงินยาวเลย รบกวนคุณลูกค้ารอสักครู่แล้วลองสอบถามใหม่อีกครั้งนะคะ 🏪' });
+      return;
+    }
+    
+    res.status(500).json({ error: 'ขออภัยค่ะ ระบบแคชเชียร์มีปัญหาขัดข้องเล็กน้อย รบกวนคุณลูกค้าลองใหม่อีกครั้งนะคะ 🙇‍♀️' });
   }
 };
