@@ -39,10 +39,10 @@ const thaiToEngMap: Record<string, string> = Object.entries(engToThaiMap).reduce
   return acc;
 }, {} as Record<string, string>);
 
-const isInvalidThaiPattern = (text: string) => 
-  /^[ัิีึืุู่้๊๋์็ะาำ]/.test(text) || 
-  /[เแโใไ][ะาำเแโใไัิีึืุู่้๊๋์็]/.test(text) || 
-  /[เแโใไ]$/.test(text) || 
+const isInvalidThaiPattern = (text: string) =>
+  /^[ัิีึืุู่้๊๋์็ะาำ]/.test(text) ||
+  /[เแโใไ][ะาำเแโใไัิีึืุู่้๊๋์็]/.test(text) ||
+  /[เแโใไ]$/.test(text) ||
   /[ัิีึืุู][ัิีึืุู]/.test(text) ||
   /[่้๊๋][่้๊๋]/.test(text) ||
   /[ัิีึืุู][ำ]/.test(text) ||
@@ -51,10 +51,10 @@ const isInvalidThaiPattern = (text: string) =>
 
 const convertWordEngToThai = (word: string) => {
   if (word.length === 0) return word;
-  if (/[\u0E00-\u0E7F]/.test(word)) return word; 
+  if (/[\u0E00-\u0E7F]/.test(word)) return word;
 
-  const isLikelyMistake = 
-    /[a-zA-Z][0-9\-=\[\];',.\/][a-zA-Z]/.test(word) || 
+  const isLikelyMistake =
+    /[a-zA-Z][0-9\-=\[\];',.\/][a-zA-Z]/.test(word) ||
     /[bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ]{4,}/.test(word) ||
     word.length > 7;
 
@@ -66,22 +66,22 @@ const convertWordEngToThai = (word: string) => {
 
 const convertWordThaiToEng = (word: string) => {
   if (word.length === 0) return word;
-  if (!/[\u0E00-\u0E7F]/.test(word)) return word; 
+  if (!/[\u0E00-\u0E7F]/.test(word)) return word;
 
   if (!isInvalidThaiPattern(word)) return word;
 
   const mapped = word.split('').map(char => thaiToEngMap[char] || char).join('');
-  
+
   if (!/[aeiouyAEIOUY]/.test(mapped)) return word;
 
   return mapped;
 };
 
 const convertKeyboardLayout = (text: string) => {
-  const words = text.split(/(\s+)/); 
+  const words = text.split(/(\s+)/);
   return words.map(word => {
     if (word.trim() === '') return word;
-    
+
     const thaiCharCount = (word.match(/[\u0E00-\u0E7F]/g) || []).length;
     const engCharCount = (word.match(/[a-zA-Z]/g) || []).length;
 
@@ -90,7 +90,7 @@ const convertKeyboardLayout = (text: string) => {
     } else if (thaiCharCount > 0 && engCharCount === 0) {
       return convertWordThaiToEng(word);
     }
-    return word; 
+    return word;
   }).join('');
 };
 
@@ -151,17 +151,17 @@ export default function ChatApp() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: trimmedInput })
       });
-      
+
       const data = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(data.error || 'Server error');
       }
-      
+
       setMessages(prev => [...prev, { role: 'ai', text: data.text, recommendedProducts: data.recommendedProducts }]);
     } catch (error: any) {
       console.error(error);
-      const errorMessage = error.message === 'Failed to fetch' 
+      const errorMessage = error.message === 'Failed to fetch'
         ? 'ขออภัยค่ะ ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ รบกวนคุณลูกค้าลองใหม่อีกครั้งนะคะ 🙇‍♀️'
         : (error.message || 'ขออภัยค่ะ ระบบมีปัญหาขัดข้องเล็กน้อย รบกวนคุณลูกค้าลองใหม่อีกครั้งนะคะ 🙇‍♀️');
       setMessages(prev => [...prev, { role: 'ai', text: errorMessage }]);
@@ -219,15 +219,15 @@ export default function ChatApp() {
                 <div className="bg-white border-t-2 border-t-green-500 border border-gray-100 rounded-2xl rounded-bl-sm px-4 py-3 text-sm text-gray-800 shadow-sm leading-relaxed w-full transition-all duration-300 hover:shadow-md">
                   <ReactMarkdown
                     components={{
-                      p: ({node, ...props}) => <p className="mb-2 last:mb-0 whitespace-pre-wrap" {...props} />,
-                      strong: ({node, ...props}) => <strong className="font-semibold text-gray-900" {...props} />,
-                      ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-2" {...props} />,
-                      ol: ({node, ...props}) => <ol className="list-decimal pl-5 mb-2" {...props} />,
-                      li: ({node, ...props}) => <li className="mb-1" {...props} />,
-                      a: ({node, ...props}) => <a className="text-orange-600 hover:text-orange-500 hover:underline transition-colors" {...props} />,
-                      h1: ({node, ...props}) => <h1 className="text-lg font-bold mb-2 text-gray-900" {...props} />,
-                      h2: ({node, ...props}) => <h2 className="text-base font-bold mb-2 text-gray-900" {...props} />,
-                      h3: ({node, ...props}) => <h3 className="text-sm font-bold mb-2 text-gray-900" {...props} />
+                      p: ({ node, ...props }) => <p className="mb-2 last:mb-0 whitespace-pre-wrap" {...props} />,
+                      strong: ({ node, ...props }) => <strong className="font-semibold text-gray-900" {...props} />,
+                      ul: ({ node, ...props }) => <ul className="list-disc pl-5 mb-2" {...props} />,
+                      ol: ({ node, ...props }) => <ol className="list-decimal pl-5 mb-2" {...props} />,
+                      li: ({ node, ...props }) => <li className="mb-1" {...props} />,
+                      a: ({ node, ...props }) => <a className="text-orange-600 hover:text-orange-500 hover:underline transition-colors" {...props} />,
+                      h1: ({ node, ...props }) => <h1 className="text-lg font-bold mb-2 text-gray-900" {...props} />,
+                      h2: ({ node, ...props }) => <h2 className="text-base font-bold mb-2 text-gray-900" {...props} />,
+                      h3: ({ node, ...props }) => <h3 className="text-sm font-bold mb-2 text-gray-900" {...props} />
                     }}
                   >
                     {msg.text}
@@ -271,10 +271,13 @@ export default function ChatApp() {
               <div className="w-7 h-7 rounded-full bg-white border-2 border-green-500 shrink-0 flex items-center justify-center text-green-600 shadow-sm mb-1 overflow-hidden">
                 <i className="fa-solid fa-user-astronaut text-[14px]"></i>
               </div>
-              <div className="bg-white border-t-2 border-t-green-500 border border-gray-100 rounded-2xl rounded-bl-sm px-4 py-4 shadow-sm flex items-center gap-1.5">
-                <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                <div className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                <div className="w-1.5 h-1.5 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+              <div className="bg-white border-t-2 border-t-green-500 border border-gray-100 rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm flex items-center gap-2">
+                <span className="text-sm text-gray-600 font-medium animate-pulse">กำลังค้นหาสินค้าค่ะ...</span>
+                <div className="flex items-center gap-1 ml-1">
+                  <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                  <div className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                  <div className="w-1.5 h-1.5 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                </div>
               </div>
             </div>
           )}

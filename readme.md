@@ -1,4 +1,6 @@
-# [WIP] AI RAG Agent - Smart Product Assistant
+# AI RAG Agent - Smart Product Assistant
+
+***(ใช้งานผ่าน API ใน Google AI Studio: สำหรับผู้ใช้งานระดับ Free tier จะถูกจำกัดโควต้าสำหรับโมเดล Flash อยู่ที่ 20 ครั้งต่อวัน)***
 
 Tomorrow marks the graduation day for the JSD12 Bootcamp at Generation Thailand. A huge thank you for their invaluable mentorship and guidance.
 
@@ -37,6 +39,9 @@ This **AI RAG Agent** project serves as my RAG training ground. While I consciou
 - **RAG-Powered Q&A:** คำตอบทั้งหมดของ AI จะถูกกำหนดให้อ้างอิงจากข้อมูลสินค้าของ DummyJSON เท่านั้น เพื่อความน่าเชื่อถือและป้องกันข้อมูลเท็จ
 - **Structured JSON Rendering:** บังคับให้ AI ตอบกลับมาในรูปแบบ JSON ตาม Interface ที่กำหนด (`AIResponse`) เพื่อให้ Frontend นำไปเรนเดอร์เป็นการ์ดสินค้าได้อย่างสมบูรณ์
 - **Context-Aware Memory:** ระบบมีการจัดการ State เพื่อจดจำประวัติการสนทนา ทำให้ผู้ใช้สามารถสั่งงานและถามคำถามต่อเนื่องได้
+- **Custom AI Persona & Error Handling:** ปรับแต่งคาแรคเตอร์ AI ให้เป็นพนักงานร้านสะดวกซื้อที่เป็นมิตร พร้อมแปลง Raw Errors (เช่น 503 Service Unavailable หรือ 429 Rate Limit) ให้กลายเป็นข้อความแจ้งเตือนที่น่ารักและสอดคล้องกับคาแรคเตอร์
+- **Optimized Data Payload:** มีการคัดกรองฟิลด์ข้อมูลจาก DummyJSON ให้เหลือเฉพาะส่วนที่จำเป็นก่อนส่งให้ Gemini API เพื่อลดการใช้ Token และป้องกันปัญหา Rate Limit
+- **UI/UX Enhancements:** ตกแต่งหน้าจอด้วย Light Theme สไตล์ร้านสะดวกซื้อที่คลีนและมินิมอล พร้อมเพิ่ม Micro-interactions และ CSS Transitions เพื่อความนุ่มนวลในการแสดงผล
 
 ## Directory Structure
 

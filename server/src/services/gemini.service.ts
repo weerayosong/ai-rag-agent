@@ -47,34 +47,48 @@ Available Product Data:
 ${JSON.stringify(productsData, null, 2)}
   `.trim();
 
-  try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-3.5-flash',
-      contents: userMessage,
-      config: {
-        systemInstruction: systemInstruction,
-        responseMimeType: 'application/json',
-        responseSchema: responseSchema,
-        temperature: 0.2, // Low temperature to minimize hallucination
-      },
-    });
+  const maxRetries = 3;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await ai.models.generateContent({
+        model: 'gemini-3.5-flash',
+        contents: userMessage,
+        config: {
+          systemInstruction: systemInstruction,
+          responseMimeType: 'application/json',
+          responseSchema: responseSchema,
+          temperature: 0.2, // Low temperature to minimize hallucination
+        },
+      });
 
-    if (!response.text) {
-      throw new Error('No text returned from Gemini API');
-    }
+      if (!response.text) {
+        throw new Error('No text returned from Gemini API');
+      }
 
-    const aiResponse: AIResponse = JSON.parse(response.text);
-    return aiResponse;
-  } catch (error: any) {
-    console.error('RAW GEMINI ERROR:', JSON.stringify(error, null, 2), error.message);
-    
-    // Check for rate limit error (429)
-    if (error.status === 429 || (error.message && error.message.includes('Quota exceeded'))) {
-      const match = error.message ? error.message.match(/retry in ([\d.]+)s/i) : null;
-      const seconds = match ? Math.ceil(parseFloat(match[1])) : 60; // Default to 60s if not found
-      throw new Error(`RATE_LIMIT:${seconds}|${error.message}`);
+      const aiResponse: AIResponse = JSON.parse(response.text);
+      return aiResponse;
+    } catch (error: any) {
+      console.error(`RAW GEMINI ERROR (Attempt ${attempt}):`, JSON.stringify(error, null, 2), error.message);
+      
+      const is503 = error.status === 503 || (error.message && (error.message.includes('503') || error.message.includes('UNAVAILABLE')));
+      
+      if (is503 && attempt < maxRetries) {
+        console.log(`Retrying after 2 seconds... (${attempt}/${maxRetries})`);
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        continue;
+      }
+      
+      // Check for rate limit error (429)
+      if (error.status === 429 || (error.message && error.message.includes('Quota exceeded'))) {
+        const match = error.message ? error.message.match(/retry in ([\d.]+)s/i) : null;
+        const seconds = match ? Math.ceil(parseFloat(match[1])) : 60; // Default to 60s if not found
+        throw new Error(`RATE_LIMIT:${seconds}|${error.message}`);
+      }
+      
+      throw new Error(`AI_ERROR:${error.message}`);
     }
-    
-    throw new Error(`AI_ERROR:${error.message}`);
   }
+  
+  throw new Error('AI_ERROR:Unexpected end of retry loop');
 };

@@ -36,8 +36,7 @@ export const chatWithAI = async (req: Request, res: Response): Promise<void> => 
     if (error.message && error.message.startsWith('RATE_LIMIT:')) {
       const [prefixAndSeconds, ...rest] = error.message.split('|');
       const seconds = prefixAndSeconds.split(':')[1];
-      const rawMessage = rest.join('|');
-      res.status(429).json({ error: `โควต้า API เต็มชั่วคราว (รอ ${seconds} วิ) | สาเหตุจริง: ${rawMessage}` });
+      res.status(429).json({ error: `ขออภัยด้วยนะคะคุณลูกค้า ตอนนี้คิวชำระเงินยาวนิดนึง รบกวนรอประมาณ ${seconds} วินาที แล้วลองสอบถามหนูใหม่อีกครั้งนะคะ 🙇‍♀️🏪` });
       return;
     }
     
