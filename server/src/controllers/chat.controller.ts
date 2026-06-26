@@ -16,8 +16,17 @@ export const chatWithAI = async (req: Request, res: Response): Promise<void> => 
     const rawProducts = await fetchProducts();
     const productsList = rawProducts.products || rawProducts;
 
+    const optimizedProducts = productsList.map((product: any) => ({
+      id: product.id,
+      title: product.title,
+      price: product.price,
+      category: product.category,
+      thumbnail: product.thumbnail,
+      description: product.description,
+    }));
+
     // 2. Process with Gemini
-    const aiResponse = await processChatWithGemini(message, productsList);
+    const aiResponse = await processChatWithGemini(message, optimizedProducts);
 
     // 3. Return strictly typed JSON
     res.json(aiResponse);
