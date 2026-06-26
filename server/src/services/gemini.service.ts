@@ -48,7 +48,7 @@ ${JSON.stringify(productsData, null, 2)}
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash',
+      model: 'gemini-3.5-flash',
       contents: userMessage,
       config: {
         systemInstruction: systemInstruction,
@@ -65,15 +65,15 @@ ${JSON.stringify(productsData, null, 2)}
     const aiResponse: AIResponse = JSON.parse(response.text);
     return aiResponse;
   } catch (error: any) {
-    console.error('Error in Gemini Service:', error);
+    console.error('RAW GEMINI ERROR:', JSON.stringify(error, null, 2), error.message);
     
     // Check for rate limit error (429)
     if (error.status === 429 || (error.message && error.message.includes('Quota exceeded'))) {
       const match = error.message ? error.message.match(/retry in ([\d.]+)s/i) : null;
       const seconds = match ? Math.ceil(parseFloat(match[1])) : 60; // Default to 60s if not found
-      throw new Error(`RATE_LIMIT:${seconds}`);
+      throw new Error(`RATE_LIMIT:${seconds}|${error.message}`);
     }
     
-    throw new Error('Failed to generate response from AI');
+    throw new Error(`AI_ERROR:${error.message}`);
   }
 };

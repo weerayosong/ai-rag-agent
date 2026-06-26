@@ -34,11 +34,13 @@ export const chatWithAI = async (req: Request, res: Response): Promise<void> => 
     console.error('Error in chat controller:', error);
     
     if (error.message && error.message.startsWith('RATE_LIMIT:')) {
-      const seconds = error.message.split(':')[1];
-      res.status(429).json({ error: `โควต้า API ของ Gemini เต็มชั่วคราว กรุณารอประมาณ ${seconds} วินาทีแล้วลองพิมพ์ถามใหม่อีกครั้งนะคะ` });
+      const [prefixAndSeconds, ...rest] = error.message.split('|');
+      const seconds = prefixAndSeconds.split(':')[1];
+      const rawMessage = rest.join('|');
+      res.status(429).json({ error: `โควต้า API เต็มชั่วคราว (รอ ${seconds} วิ) | สาเหตุจริง: ${rawMessage}` });
       return;
     }
     
-    res.status(500).json({ error: 'เซิร์ฟเวอร์ขัดข้องชั่วคราว ไม่สามารถดึงข้อมูลได้ค่ะ' });
+    res.status(500).json({ error: `เซิร์ฟเวอร์ขัดข้อง: ${error.message}` });
   }
 };
