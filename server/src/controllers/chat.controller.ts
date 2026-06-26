@@ -3,12 +3,20 @@ import { fetchProducts } from '../services/dummy.service';
 import { processChatWithGemini } from '../services/gemini.service';
 import { ChatRequest } from 'shared';
 
+const responseCache = new Map<string, any>();
+
 export const chatWithAI = async (req: Request, res: Response): Promise<void> => {
   try {
     const { message } = req.body as ChatRequest;
 
     if (!message) {
       res.status(400).json({ error: 'Message is required' });
+      return;
+    }
+
+    const cacheKey = message.trim().toLowerCase();
+    if (responseCache.has(cacheKey)) {
+      res.json(responseCache.get(cacheKey));
       return;
     }
 
@@ -27,6 +35,8 @@ export const chatWithAI = async (req: Request, res: Response): Promise<void> => 
 
     // 2. Process with Gemini
     const aiResponse = await processChatWithGemini(message, optimizedProducts);
+
+    responseCache.set(cacheKey, aiResponse);
 
     // 3. Return strictly typed JSON
     res.json(aiResponse);
